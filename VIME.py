@@ -29,11 +29,11 @@ MAX_SIZE = 50000
 # previous KL used for normalization
 KL_Q_L = 10
 # whether to normalize the intrinsic reward based on previous KLs
-USE_KL_Q = True
+USE_KL_Q = False
 # whether to use VIME
 USE_VIME = True
 # specify your device here
-device = 'cuda'
+device = 'cpu'
 
 # following are the parameters for bnn
 N_HIDDEN = [32]

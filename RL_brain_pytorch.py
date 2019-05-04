@@ -29,6 +29,7 @@ class PolicyGradient(object):
         self.policy_net.apply(self.init_weights)
         self.policy_net.to(device)
         # initialize weights
+        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=self.lr)
         
 
     def init_weights(self, m):
@@ -66,17 +67,16 @@ class PolicyGradient(object):
         return discounted_ep_rs
 
     def train(self):
-        optimizer = optim.Adam(self.policy_net.parameters(), lr=self.lr)
         policy_loss = []
         discounted_ep_rs_norm = self._discount_and_norm_rewards()
 #        discounted_ep_rs_norm = torch.tensor(discounted_ep_rs_norm, dtype = torch.float32, device =self.device)
 #        saved_log_probs = torch.tensor(self.policy_net.saved_log_probs, dtype=torch.float32, device=self.device)
         for log_prob, R in zip(self.policy_net.saved_log_probs, discounted_ep_rs_norm):
             policy_loss.append(-log_prob * R)
-        optimizer.zero_grad()
+        self.optimizer.zero_grad()
         policy_loss = torch.cat(policy_loss).mean()
         policy_loss.backward()
-        optimizer.step()
+        self.optimizer.step()
         del self.policy_net.saved_log_probs[:]
         self.ep_obs, self.ep_as, self.ep_rs, self.ep_next_obs, self.ep_naive_rs, self.ep_kls = [], [], [], [], [], []
         return discounted_ep_rs_norm

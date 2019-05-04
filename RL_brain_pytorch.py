@@ -10,8 +10,8 @@ from torch.autograd import Variable
 np.random.seed(1)
 torch.manual_seed(1)
 
-class PolicyGradient:
-    def __init__(self, n_actions, n_features, learning_rate = 0.01, reward_decay = 0.95, device ="cpu"):
+class PolicyGradient(object):
+    def __init__(self, n_actions, n_features, n_hidden=32, learning_rate=0.01, reward_decay=0.95, device="cpu"):
         self.n_actions = n_actions
         self.n_features = n_features
         self.lr = learning_rate
@@ -25,9 +25,11 @@ class PolicyGradient:
         self.ep_next_obs, self.ep_naive_rs, self.ep_kls = [], [], []
 
         #_build_net
-        self.policy_net = Policy_MLP(n_features = self.n_features, n_actions = self.n_actions)
-        # initialize weights
+        self.policy_net = Policy_MLP(n_features = self.n_features, n_actions = self.n_actions, n_hidden=n_hidden)
         self.policy_net.apply(self.init_weights)
+        self.policy_net.to(device)
+        # initialize weights
+        
 
     def init_weights(self, m):
         if type(m) == nn.Linear:
@@ -38,7 +40,7 @@ class PolicyGradient:
         """
         choose action based on observation
         """
-        observation = torch.from_numpy(observation).float().unsqueeze(0)
+        observation = torch.from_numpy(observation).float().unsqueeze(0).to(self.device)
         probs = self.policy_net(observation)
         m = Categorical(probs)
         # sample from action space
@@ -67,7 +69,8 @@ class PolicyGradient:
         optimizer = optim.Adam(self.policy_net.parameters(), lr=self.lr)
         policy_loss = []
         discounted_ep_rs_norm = self._discount_and_norm_rewards()
-        discounted_ep_rs_norm = torch.tensor(discounted_ep_rs_norm, dtype = torch.float32, device =self.device)
+#        discounted_ep_rs_norm = torch.tensor(discounted_ep_rs_norm, dtype = torch.float32, device =self.device)
+#        saved_log_probs = torch.tensor(self.policy_net.saved_log_probs, dtype=torch.float32, device=self.device)
         for log_prob, R in zip(self.policy_net.saved_log_probs, discounted_ep_rs_norm):
             policy_loss.append(-log_prob * R)
         optimizer.zero_grad()

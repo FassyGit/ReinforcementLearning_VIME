@@ -8,10 +8,10 @@ class Policy_MLP(nn.Module):
     n_features: dim of observations, input_dim
     n_actios : dim of action space, output_dim
     """
-    def __init__(self, n_features,n_actions ):
+    def __init__(self, n_features, n_actions, n_hidden=32):
         super(Policy_MLP, self).__init__()
-        self.affine1 = nn.Linear(n_features, 10)
-        self.affine2 = nn.Linear(10, n_actions)
+        self.affine1 = nn.Linear(n_features, n_hidden)
+        self.affine2 = nn.Linear(n_hidden, n_actions)
         self.saved_log_probs = []
 
     def forward(self, x):

@@ -61,6 +61,7 @@ class Trainer(object):
     def train(self):
         loss_all = []
         is_new_metric = False
+        metric_train, kl_train = 0, 0
         for epoch in range(1, self.max_epoch+1):
             loss_all.append(self.train_epoch())
             
@@ -94,7 +95,7 @@ class Trainer(object):
                         self.writer.add_scalar('val/kl', kl_val, epoch)
                     is_new_metric = False
 
-        return loss_all
+        return np.array(loss_all).mean(), metric_train, kl_train
     
     def train_epoch(self):
         self.model.train()

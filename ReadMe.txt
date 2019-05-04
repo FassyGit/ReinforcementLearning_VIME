@@ -1,8 +1,18 @@
-@Lumin
-VIME.py里代码开头的一些参数可调
-目前存在的问题
-USE_VIME = False时的效果明显比True要好，这一点在无论对于intrinsic reward是否进行normalize时都成立（CartPolev-0）
-也就是说不加VIME更好，我还没有试其他的GAME
-试其他GAME的GYM的环境需要改变
-关于Modify 环境和导出视频： https://github.com/openai/gym/wiki/FAQ
-----------------------------------------------------------------------------------------------------------
+Main Changes (arguments):
+LIKELIHOOD_DS_BNN: 5.0 => 1.0
+LR_BNN: 1e-4 => 1e-2
+sample_pool_size: 10 => 5000
+MAX_EPOCH_BNN: 1000 => 5
+
+Main Changes (functionality):
+Enable training policy net on GPU
+Normalize test set if train set is normalized using same statistics
+Record detailed and informative values using tensorboard
+N of hidden units of policy net can be specified now
+
+Arguments to be tuned for different applications:
+ETA
+LR_BNN
+EXTRA_W_KL
+
+(Other arguments may also need to be tuned, but the effect of the listed ones could be more explainable and significant)

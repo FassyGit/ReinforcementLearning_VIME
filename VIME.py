@@ -15,14 +15,14 @@ import shutil
 import pandas as pd
 
 # parameters for RL
-DISPLAY_REWARD_THRESHOLD = 400  # renders environment if total episode reward is greater than this threshold
+DISPLAY_REWARD_THRESHOLD = -5000  # renders environment if total episode reward is greater than this threshold
 GAME = 'CartPole-v1'
 is_act_discrete = True
-RANDOM_SEED = 1
+RANDOM_SEED = 42
 LR_POLICY = 0.01
 GAMMA = 0.99
 NUM_EPISODE = 1000
-ETA = 1e-4
+ETA = 0.5
 sample_pool_size = 5000
 NORMALIZE = True
 MIN_SIZE = 1000
@@ -32,7 +32,7 @@ KL_Q_L = 10
 # whether to normalize the intrinsic reward based on previous KLs
 USE_KL_Q = True
 # whether to use VIME
-USE_VIME = True
+USE_VIME = False
 # specify your device here
 device = 'cpu'
 
@@ -68,7 +68,7 @@ def update_klnormalize(kls, pre_kl_medians):
     return np.mean(pre_kl_medians)
 
 def main():
-    RENDER = False
+    RENDER =False
     tb_writer = SummaryWriter(log_dir='./tboard/%s' % (EXPERIMENT_ID))
     
     log_cfg = {
@@ -92,13 +92,21 @@ def main():
     #     reward_threshold = 4500.0
     # )
     # env = gym.make('CartPole-Long-v0')
+    # gym.envs.register(
+    #     id = 'MountainCarContinuous-Long-v0',
+    #     entry_point = 'gym.envs.classic_control:Continuous_MountainCarEnv',
+    #     max_episode_steps = 999,
+    #     reward_threshold = 90.0
+    # )
+    # env = gym.make('MountainCarContinuous-Long-v0')
     gym.envs.register(
-        id = 'MountainCarContinuous-Long-v0',
-        entry_point = 'gym.envs.classic_control:Continuous_MountainCarEnv',
-        max_episode_steps = 999,
-        reward_threshold = 90.0
+        id='MountainCar-Long-v0',
+        entry_point='gym.envs.classic_control:MountainCarEnv',
+        max_episode_steps=5000,
+        reward_threshold=-110.0
     )
-    env = gym.make('MountainCarContinuous-Long-v0')
+    env = gym.make('MountainCar-Long-v0')
+
     # env._max_episode_seconds = 200
     env.seed(RANDOM_SEED)
     torch.manual_seed(RANDOM_SEED)
@@ -149,7 +157,7 @@ def main():
         step_to_go = 0
 
         while True:
-#           if RENDER: env.render()
+            if RENDER: env.render()
             action = RL.choose_action(observation= observation)
             step_to_go += 1
             observation_, reward, done, info = env.step(action)

@@ -30,9 +30,9 @@ MAX_SIZE = 50000
 # previous KL used for normalization
 KL_Q_L = 10
 # whether to normalize the intrinsic reward based on previous KLs
-USE_KL_Q = False
+USE_KL_Q = True
 # whether to use VIME
-USE_VIME = False
+USE_VIME = True
 # specify your device here
 device = 'cpu'
 
@@ -85,13 +85,20 @@ def main():
         'external_criterion_val': nn.MSELoss(),
     }
 
+    # gym.envs.register(
+    #     id = 'CartPole-Long-v0',
+    #     entry_point = 'gym.envs.classic_control:CartPoleEnv',
+    #     max_episode_steps = 5000,
+    #     reward_threshold = 4500.0
+    # )
+    # env = gym.make('CartPole-Long-v0')
     gym.envs.register(
-        id = 'CartPole-Long-v0',
-        entry_point = 'gym.envs.classic_control:CartPoleEnv',
-        max_episode_steps = 5000,
-        reward_threshold = 4500.0
+        id = 'MountainCarContinuous-Long-v0',
+        entry_point = 'gym.envs.classic_control:Continuous_MountainCarEnv',
+        max_episode_steps = 999,
+        reward_threshold = 90.0
     )
-    env = gym.make('CartPole-Long-v0')
+    env = gym.make('MountainCarContinuous-Long-v0')
     # env._max_episode_seconds = 200
     env.seed(RANDOM_SEED)
     torch.manual_seed(RANDOM_SEED)

@@ -7,8 +7,6 @@ from Policynet_Pytorch import Policy_MLP
 from torch.distributions import Categorical
 from torch.autograd import Variable
 
-np.random.seed(1)
-torch.manual_seed(1)
 
 class PolicyGradient(object):
     def __init__(self, n_actions, n_features, n_hidden=32, learning_rate=0.01, reward_decay=0.95, device="cpu"):
@@ -17,6 +15,7 @@ class PolicyGradient(object):
         self.lr = learning_rate
         self.gamma = reward_decay
         self.device = device
+        self.eps = np.finfo(np.float32).eps.item()
 
         # observations, actions, and rewards
         self.ep_obs, self.ep_as, self.ep_rs = [], [], []
@@ -30,6 +29,9 @@ class PolicyGradient(object):
         self.policy_net.to(device)
         # initialize weights
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=self.lr)
+    #     record training loss and episode rewards
+        self.naivie_reward_history = []
+        self.loss_history = []
         
 
     def init_weights(self, m):
@@ -54,17 +56,27 @@ class PolicyGradient(object):
         self.ep_as.append(a)
         self.ep_rs.append(r)
 
+    # def _discount_and_norm_rewards(self):
+    #     # discount episode rewards
+    #     discounted_ep_rs = np.zeros_like(self.ep_rs)
+    #     running_add = 0
+    #     for t in reversed(range(0, len(self.ep_rs))):
+    #         running_add = running_add * self.gamma + self.ep_rs[t]
+    #         discounted_ep_rs[t] = running_add
+    #     # normalize episode rewards
+    #     discounted_ep_rs -= np.mean(discounted_ep_rs)
+    #     discounted_ep_rs /= np.std(discounted_ep_rs)
+    #     return discounted_ep_rs
+
     def _discount_and_norm_rewards(self):
-        # discount episode rewards
-        discounted_ep_rs = np.zeros_like(self.ep_rs)
-        running_add = 0
-        for t in reversed(range(0, len(self.ep_rs))):
-            running_add = running_add * self.gamma + self.ep_rs[t]
-            discounted_ep_rs[t] = running_add
-        # normalize episode rewards
-        discounted_ep_rs -= np.mean(discounted_ep_rs)
-        discounted_ep_rs /= np.std(discounted_ep_rs)
-        return discounted_ep_rs
+        R = 0
+        returns = []
+        for r in self.ep_rs[::-1]:
+            R = r + self.gamma * R
+            returns.insert(0,R)
+        returns = torch.tensor(returns)
+        returns = (returns - returns.mean()) / (returns.std()+ self.eps)
+        return returns
 
     def train(self):
         policy_loss = []
@@ -74,9 +86,12 @@ class PolicyGradient(object):
         for log_prob, R in zip(self.policy_net.saved_log_probs, discounted_ep_rs_norm):
             policy_loss.append(-log_prob * R)
         self.optimizer.zero_grad()
-        policy_loss = torch.cat(policy_loss).mean()
+        policy_loss = torch.cat(policy_loss).sum()
         policy_loss.backward()
         self.optimizer.step()
+        # record the loss and the sum of naive rewards for each episodes for plotting
+        self.loss_history.append(policy_loss.item())
+        self.naivie_reward_history.append(np.sum(self.ep_naive_rs))
         del self.policy_net.saved_log_probs[:]
         self.ep_obs, self.ep_as, self.ep_rs, self.ep_next_obs, self.ep_naive_rs, self.ep_kls = [], [], [], [], [], []
         return discounted_ep_rs_norm

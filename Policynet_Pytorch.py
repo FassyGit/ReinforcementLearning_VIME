@@ -17,5 +17,6 @@ class Policy_MLP(nn.Module):
     def forward(self, x):
         x = self.affine1(x)
         x = torch.tanh(x)
+        # x = nn.ReLU(x)
         action_scores = self.affine2(x)
         return F.softmax(action_scores, dim=1)
